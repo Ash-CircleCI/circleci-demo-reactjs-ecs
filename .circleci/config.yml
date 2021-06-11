@@ -134,7 +134,7 @@ workflows:
   version: 2
   test-and-deploy:                      #This workflow will run on each commit.
     jobs:
-      - checkout-code:
+      - checkout-code
       - terraform-format-check:
           requires:
             - checkout-code
