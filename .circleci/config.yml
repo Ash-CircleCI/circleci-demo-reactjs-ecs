@@ -135,17 +135,10 @@ workflows:
   test-and-deploy:                      #This workflow will run on each commit.
     jobs:
       - checkout-code:
-          context: node-demo
       - terraform-format-check:
-          context: node-demo
-          requires:
-            - checkout-code
-      - terraform-validate-and-plan:
-          context: node-demo
           requires:
             - checkout-code
       - node/test:
-          context: node-demo
           requires:
             - checkout-code
           post-steps:
@@ -157,59 +150,6 @@ workflows:
                 path: ./test-results
             - store_artifacts:
                 path: ./test-results/junit.xml
-            - *notify_slack_on_fail
       - node-static-analysis:
-          context: node-demo
           requires:
             - checkout-code
-      - build-image-and-push-to-ecr:
-          context: node-demo
-          pre-steps:
-            - restore_cache:
-                key: v1-node-deps
-          requires:
-            - node/test
-            - node-static-analysis
-            - terraform-validate-and-plan
-      - manual-approval:
-          type: approval
-          requires:
-            - build-image-and-push-to-ecr
-      - terraform-apply-infra:
-          context: node-demo
-          requires:
-            - manual-approval
-      - aws-ecs/deploy-service-update:
-          context: node-demo
-          requires:
-            - terraform-apply-infra
-          family: "${AWS_RESOURCE_NAME_PREFIX}-service"
-          cluster-name: "${AWS_RESOURCE_NAME_PREFIX}-cluster"
-          container-image-name-updates: "container=${AWS_RESOURCE_NAME_PREFIX}-service,tag=${CIRCLE_SHA1}"
-          post-steps:
-            - *notify_slack_on_fail
-      - terraform-apply-dns:
-          context: node-demo
-          requires:
-            - aws-ecs/deploy-service-update
-            
-  nightly_build:                                #This workflow will run according to a cron-based schedule.
-    jobs:
-      - checkout-code:
-          context: node-demo
-      - build-image-only:
-          context: node-demo
-          requires:
-            - checkout-code
-          post-steps:
-            - *notify_slack_on_fail
-            - *notify_slack_on_success
-    triggers:
-      - schedule:
-          cron: "0 0 * * 1,2,3,4,5" #run at 00:00 M-F
-          filters:
-            branches: 
-              only: 
-                - demo
-                - master
-                # comment
