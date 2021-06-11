@@ -33,7 +33,6 @@ jobs:
           root: .
           paths:
             - .
-      - *notify_slack_on_fail
   node-static-analysis:
     docker:
       - image: cimg/node:15.6.0
@@ -43,7 +42,6 @@ jobs:
       - run: |
           npm install eslint eslint-plugin-react 
           node_modules/eslint/bin/eslint.js ./src/
-      - *notify_slack_on_fail
   terraform-format-check:
     docker:
       - image: cimg/base:2021.01 
@@ -56,7 +54,6 @@ jobs:
           path: ./tf/infra
       - terraform/fmt:  
           path: ./tf/route53
-      - *notify_slack_on_fail
   terraform-validate-and-plan:
     docker:
       - image: cimg/base:2021.01 
